@@ -14,12 +14,31 @@ def combine_result(data_path, model_name, data_to_index, dtype='train'):
     for lang in ['en', 'es', 'jp']:
         if os.path.isfile(f'''{data_path}{lang}_{data_to_index}_{model_name}_{dtype}.csv'''):
             sub_df = pd.read_csv(f'''{data_path}{lang}_{data_to_index}_{model_name}_{dtype}.csv''', index_col=0)
+            if dtype == 'train':
+                sub_df=sub_df[['qid','docno','score']]
+                sub_df.qid=sub_df.qid.astype(str)
+                sub_df.docno = sub_df.docno.astype(str)
+                #sub_df.columns=['query_id','product_id','score']
             final.append(sub_df)
 
-    df = pd.concat(final)
-    df['query_id'] = df['query_id'].astype(str)
-    df.to_csv(f'''{data_to_index}_{model_name}_{dtype}.csv''', index=None)
 
+    df = pd.concat(final)
+    if dtype=='test':
+        df.query_id = df.query_id.astype(str)
+        df.product_id=df.product_id.astype(str)
+    df.to_csv(f'''{data_to_index}_{model_name}_{dtype}.csv''', index=None)
+    return df
+
+def get_merged_qrels(data_path):
+    final=[]
+    for lang in ['en','es','jp']:
+        if os.path.isfile(f'''{data_path}{lang}_qrels.csv'''):
+            qrels = pd.read_csv(f'''{data_path}{lang}_qrels.csv''', sep=',')
+            qrels['label'] = qrels['label'].astype(int)
+            qrels['qid'] = qrels['qid'].astype(str)
+            final.append(qrels)
+    df = pd.concat(final)
+    return df
 
 def get_qrels(data_path, lang):
     qrels = pd.read_csv(f'''{data_path}{lang}_qrels.csv''', sep=',')
@@ -98,4 +117,7 @@ index_path = '/Users/ricky/Documents/Rishabh/Dataset/KDD_amazon/index/'
 data_to_index = 'title_text'
 for lang in ['es','jp']:
     index_each_lang(qe=False, eval=True, lang=lang, index_path=index_path, gs=False)
-combine_result(data_path, 'BM25', data_to_index, dtype='test')
+combined_df=combine_result(data_path, 'BM25', data_to_index, dtype='test')
+qrels=get_merged_qrels(data_path)
+pt.Utils.evaluate(combined_df, qrels, metrics=['ndcg_cut_10', 'ndcg_cut_20'])
+#{'ndcg_cut_10': 0.23747557699680494, 'ndcg_cut_20': 0.22943625462979889}
