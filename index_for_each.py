@@ -41,10 +41,16 @@ def index_each_lang(qe=False, eval=True, lang='en', index_path='', gs=False, dat
 
     print('-----------------Indexed----------------\n')
 
+    if lang=='en':
+        stemmer='Stopwords,PorterStemmer'
+    elif lang=='es':
+        stemmer='Stopwords,SpanishSnowballStemmer'
+    else:
+        stemmer=''
     BM25 = pt.BatchRetrieve(indexref3, num_results=30, wmodel="BM25",
                             controls={"c": 0.8, "bm25.k_1": 0.6, "bm25.k_3": 0.5}, properties={
             'tokeniser': 'UTFTokeniser',
-            'termpipelines': 'Stopwords,SpanishSnowballStemmer', })
+            'termpipelines': stemmer, })
     model_name = 'BM25'
 
     if gs:
@@ -90,5 +96,6 @@ def index_each_lang(qe=False, eval=True, lang='en', index_path='', gs=False, dat
 data_path = '/Users/ricky/PycharmProjects/KDD_amazon/subsets/'
 index_path = '/Users/ricky/Documents/Rishabh/Dataset/KDD_amazon/index/'
 data_to_index = 'title_text'
-index_each_lang(qe=False, eval=True, lang='en', index_path=index_path, gs=False)
+for lang in ['es','jp']:
+    index_each_lang(qe=False, eval=True, lang=lang, index_path=index_path, gs=False)
 combine_result(data_path, 'BM25', data_to_index, dtype='test')

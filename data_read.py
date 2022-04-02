@@ -88,12 +88,18 @@ def test_topic(df, lang='en'):
 
     for ii, rows in topics.iterrows():
         topics.at[ii, 'query'] = preprocessing(rows['query'])
-    topics.to_csv('./subsets/%s_test_topics.csv' % lang, index=False, sep=':')
+    topics.to_csv('./subsets/%s_test_topics.csv' % lang, index=False, sep=':',header=False)
     return topics
 
+data_path = '/Users/ricky/Documents/Rishabh/Dataset/KDD_amazon/'
 
 test = pd.read_csv(f'''{data_path}test.csv''')
 # use for each language.
 for lang in ['en', 'es', 'jp']:
-    test_sub = test[test["query_locale"] == lang]
-    topics_test = test_topic(test_sub, lang=lang)
+    if lang=='en':
+        langs='us'
+        test_sub = test[test["query_locale"] == langs]
+        topics_test = test_topic(test_sub, lang=lang)
+    else:
+        test_sub = test[test["query_locale"] == lang]
+        topics_test = test_topic(test_sub, lang=lang)
