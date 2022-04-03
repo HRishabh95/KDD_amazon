@@ -4,14 +4,12 @@ import pandas as pd
 import pyterrier as pt
 
 if not pt.started():
-    pt.init(mem=8000, version='snapshot',
-            boot_packages=["com.github.terrierteam:terrier-prf:-SNAPSHOT"]
-            )
-
+    pt.init(mem=8000)
+#version='snapshot', boot_packages=["com.github.terrierteam:terrier-prf:-SNAPSHOT"]
 
 def combine_result(data_path, model_name, data_to_index, dtype='train'):
     final = []
-    for lang in ['en', 'es', 'jp']:
+    for lang in ['us', 'es', 'jp']:
         if os.path.isfile(f'''{data_path}{lang}_{data_to_index}_{model_name}_{dtype}.csv'''):
             sub_df = pd.read_csv(f'''{data_path}{lang}_{data_to_index}_{model_name}_{dtype}.csv''', index_col=0)
             if dtype == 'train':
@@ -29,9 +27,24 @@ def combine_result(data_path, model_name, data_to_index, dtype='train'):
     df.to_csv(f'''{data_to_index}_{model_name}_{dtype}.csv''', index=None)
     return df
 
+
+def check_the_submission(df,data_path,model_name,data_to_index):
+    cleaned_df=[]
+    for lang in ['us','es','jp']:
+        df_docs = pd.read_csv(f'''{data_path}{lang}_prod_{data_to_index}.csv''')
+        product_id=df_docs.docno.values
+        product_id_combined = df[df['product_locale'] == lang].product_id.values
+        common_product_id = list(set(product_id).intersection(product_id_combined))
+        cleaned_df.append(df[(df['product_id'].isin(common_product_id)) & (df['product_locale'] == lang)])
+
+    final_df=pd.concat(cleaned_df)
+    final_df=final_df[['query_id','product_id']]
+    final_df.to_csv(f'''{data_to_index}_{model_name}_test.csv''', index=None)
+    return final_df
+
 def get_merged_qrels(data_path):
     final=[]
-    for lang in ['en','es','jp']:
+    for lang in ['us','es','jp']:
         if os.path.isfile(f'''{data_path}{lang}_qrels.csv'''):
             qrels = pd.read_csv(f'''{data_path}{lang}_qrels.csv''', sep=',')
             qrels['label'] = qrels['label'].astype(int)
@@ -51,22 +64,25 @@ def index_each_lang(qe=False, eval=True, lang='en', index_path='', gs=False, dat
                     change_settings=False):
 
     data_type = f'''{lang}_{data_to_index}'''
-    df_docs = pd.read_csv(f'''{data_path}{lang}_prod_sub.csv''')
+    df_docs = pd.read_csv(f'''./subsets/{lang}_prod_{data_to_index}.csv''')
     if not os.path.exists(f'''{index_path}{data_type}/data.properties'''):
         indexer = pt.DFIndexer(f'''{index_path}{data_type}''', overwrite=True, verbose=True, Threads=8)
-        indexref3 = indexer.index(df_docs[data_to_index], df_docs[['docno', data_to_index]])
+        indexer.setProperty("tokeniser",
+                            "UTFTokeniser")  # Replaces the default EnglishTokeniser, which makes assumptions specific to English
+        indexer.setProperty("termpipelines", "Stopwords")
+        indexref = indexer.index(df_docs['text'], df_docs[['docno', 'text']])
     else:
-        indexref3 = pt.IndexRef.of(f'''{index_path}{data_type}/data.properties''')
+        indexref = pt.IndexRef.of(f'''{index_path}{data_type}/data.properties''')
 
     print('-----------------Indexed----------------\n')
 
-    if lang=='en':
+    if lang=='us':
         stemmer='Stopwords,PorterStemmer'
     elif lang=='es':
         stemmer='Stopwords,SpanishSnowballStemmer'
     else:
         stemmer=''
-    BM25 = pt.BatchRetrieve(indexref3, num_results=30, wmodel="BM25",
+    BM25 = pt.BatchRetrieve(indexref, num_results=20, wmodel="BM25",
                             controls={"c": 0.8, "bm25.k_1": 0.6, "bm25.k_3": 0.5}, properties={
             'tokeniser': 'UTFTokeniser',
             'termpipelines': stemmer, })
@@ -91,7 +107,7 @@ def index_each_lang(qe=False, eval=True, lang='en', index_path='', gs=False, dat
 
     if qe:
         print('------------Query Expansion-------------')
-        RM3 = pt.rewrite.RM3(indexref3)
+        RM3 = pt.rewrite.RM3(indexref)
         BM25 = BM25 >> RM3 >> BM25
         model_name = 'BM25_RM3'
 
@@ -108,16 +124,31 @@ def index_each_lang(qe=False, eval=True, lang='en', index_path='', gs=False, dat
 
     submission_sample = res[['qid', 'docno']]
     submission_sample.columns = ['query_id', 'product_id']
-
+    submission_sample['product_locale'] = lang
     submission_sample.to_csv(f'''{data_path}{lang}_{data_to_index}_{model_name}_test.csv''')
 
 
 data_path = '/Users/ricky/PycharmProjects/KDD_amazon/subsets/'
 index_path = '/Users/ricky/Documents/Rishabh/Dataset/KDD_amazon/index/'
-data_to_index = 'title_text'
-for lang in ['es','jp']:
-    index_each_lang(qe=False, eval=True, lang=lang, index_path=index_path, gs=False)
+
+data_to_indexs=['product_bullet_point_product_title', 'product_bullet_point_product_description',
+               'product_bullet_point_product_brand',
+               'product_title_product_description',
+               'product_brand_product_description_product_bullet_point',
+               'product_title_product_description_product_bullet_point',
+               'product_title_product_brand_product_bullet_point',
+               'product_title_product_description_product_bullet_point_product_brand']
+data_to_index = data_to_indexs[-2]
+
+
+for lang in ['us','es','jp']:
+    index_each_lang(qe=False, eval=True, lang=lang, index_path=index_path, data_to_index=data_to_index, gs=False)
+
+## Combining different results for submission.
 combined_df=combine_result(data_path, 'BM25', data_to_index, dtype='test')
+cleaned_df=check_the_submission(combined_df,data_path,'BM25',data_to_index)
+
+# train dtype
 qrels=get_merged_qrels(data_path)
 pt.Utils.evaluate(combined_df, qrels, metrics=['ndcg_cut_10', 'ndcg_cut_20'])
 #{'ndcg_cut_10': 0.23747557699680494, 'ndcg_cut_20': 0.22943625462979889}
