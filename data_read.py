@@ -114,6 +114,7 @@ def clean_df_combine(prod_cat):
                ['product_title','product_description','product_bullet_point','product_brand']]
     for sub in subsets:
         cleaned_prod_cat = prod_cat.dropna(subset=sub)
+        print(len(prod_cat),len(cleaned_prod_cat))
         ## duplicated and saving
         index_file_for_combine(cleaned_prod_cat, sub)
 

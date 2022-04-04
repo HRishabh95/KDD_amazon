@@ -8,16 +8,33 @@ prod_cat = pd.read_csv(f'''{data_path}product_cat.csv''')
 train = pd.read_csv(f'''{data_path}train.csv''')
 
 ## Missing values
-cleaned_prod_cat = prod_cat.dropna(subset=['product_bullet_point', 'product_title', 'product_description','product_brand'])
+prod_cat = prod_cat.dropna(subset=['product_description','product_brand'])
 
 ## duplicated
-dupli = cleaned_prod_cat.duplicated(subset='product_id', keep=False)
-cleaned_prod_cat[dupli].sort_values('product_id')
+dupli = prod_cat.duplicated(subset='product_id', keep=False)
+prod_cat[dupli].sort_values('product_id')
 
 ## language split
-en_prod = cleaned_prod_cat[cleaned_prod_cat['product_locale'] == 'us']
-jp_prod = cleaned_prod_cat[cleaned_prod_cat['product_locale'] == 'jp']
-es_prod = cleaned_prod_cat[cleaned_prod_cat['product_locale'] == 'es']
+en_prod = prod_cat[prod_cat['product_locale'] == 'us']
+jp_prod = prod_cat[prod_cat['product_locale'] == 'jp']
+es_prod = prod_cat[prod_cat['product_locale'] == 'es']
+
+en_prod = en_prod[
+        ['product_id', 'product_title', 'product_bullet_point', "product_brand", "product_description"]]
+en_prod.columns = ['docno', 'title', 'text', 'brand', 'desc']
+
+en_prod.to_csv('./subsets/us_prod_sub.csv', index=False)
+
+es_prod = es_prod[
+        ['product_id', 'product_title', 'product_bullet_point', "product_brand", "product_description"]]
+es_prod.columns = ['docno', 'title', 'text', 'brand', 'desc']
+es_prod.to_csv('./subsets/es_prod_sub.csv', index=False)
+
+jp_prod = jp_prod[
+        ['product_id', 'product_title', 'product_bullet_point', "product_brand", "product_description"]]
+jp_prod.columns = ['docno', 'title', 'text', 'brand', 'desc']
+jp_prod.to_csv('./subsets/jp_prod_sub.csv', index=False)
+
 
 def preprocessing(x):
     x = str(x).lower()

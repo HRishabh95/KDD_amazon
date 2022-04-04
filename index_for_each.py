@@ -31,7 +31,7 @@ def combine_result(data_path, model_name, data_to_index, dtype='train'):
 def check_the_submission(df,data_path,model_name,data_to_index):
     cleaned_df=[]
     for lang in ['us','es','jp']:
-        df_docs = pd.read_csv(f'''{data_path}{lang}_prod_{data_to_index}.csv''')
+        df_docs = pd.read_csv(f'''{data_path}{lang}_prod_sub.csv''')
         product_id=df_docs.docno.values
         product_id_combined = df[df['product_locale'] == lang].product_id.values
         common_product_id = list(set(product_id).intersection(product_id_combined))
@@ -82,7 +82,7 @@ def index_each_lang(qe=False, eval=True, lang='en', index_path='', gs=False, dat
         stemmer='Stopwords,SpanishSnowballStemmer'
     else:
         stemmer=''
-    BM25 = pt.BatchRetrieve(indexref, num_results=20, wmodel="BM25",
+    BM25 = pt.BatchRetrieve(indexref, num_results=100, wmodel="BM25",
                             controls={"c": 0.8, "bm25.k_1": 0.6, "bm25.k_3": 0.5}, properties={
             'tokeniser': 'UTFTokeniser',
             'termpipelines': stemmer, })
@@ -145,10 +145,11 @@ for lang in ['us','es','jp']:
     index_each_lang(qe=False, eval=True, lang=lang, index_path=index_path, data_to_index=data_to_index, gs=False)
 
 ## Combining different results for submission.
-combined_df=combine_result(data_path, 'BM25', data_to_index, dtype='test')
+combined_df=combine_result(data_path, 'BM25', data_to_index, dtype='train')
 cleaned_df=check_the_submission(combined_df,data_path,'BM25',data_to_index)
 
 # train dtype
 qrels=get_merged_qrels(data_path)
 pt.Utils.evaluate(combined_df, qrels, metrics=['ndcg_cut_10', 'ndcg_cut_20'])
-#{'ndcg_cut_10': 0.23747557699680494, 'ndcg_cut_20': 0.22943625462979889}
+#{'ndcg_cut_10': 0.23747557699680494, 'ndcg_cut_20': 0.22943625462979889} num_results=20
+#{'ndcg_cut_10': 0.27361675817105907, 'ndcg_cut_20': 0.26223407618626343} num_results=
