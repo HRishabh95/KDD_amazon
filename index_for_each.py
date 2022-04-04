@@ -4,10 +4,19 @@ import pandas as pd
 import pyterrier as pt
 
 if not pt.started():
-    pt.init(mem=8000)
-#version='snapshot', boot_packages=["com.github.terrierteam:terrier-prf:-SNAPSHOT"]
+    pt.init(mem=8000,version='snapshot', boot_packages=["com.github.terrierteam:terrier-prf:-SNAPSHOT"])
 
 def combine_result(data_path, model_name, data_to_index, dtype='train'):
+    '''
+
+    Combine results from different indexers.
+
+    :param data_path: Data path
+    :param model_name: BM25
+    :param data_to_index: Combination to index
+    :param dtype: train or test
+    :return:
+    '''
     final = []
     for lang in ['us', 'es', 'jp']:
         if os.path.isfile(f'''{data_path}{lang}_{data_to_index}_{model_name}_{dtype}.csv'''):
@@ -29,6 +38,15 @@ def combine_result(data_path, model_name, data_to_index, dtype='train'):
 
 
 def check_the_submission(df,data_path,model_name,data_to_index):
+    '''
+    Check the submission files
+
+    :param df: Combined Df
+    :param data_path: Data path
+    :param model_name: BM25
+    :param data_to_index: Combination
+    :return:
+    '''
     cleaned_df=[]
     for lang in ['us','es','jp']:
         df_docs = pd.read_csv(f'''{data_path}{lang}_prod_sub.csv''')
@@ -54,6 +72,12 @@ def get_merged_qrels(data_path):
     return df
 
 def get_qrels(data_path, lang):
+    '''
+
+    :param data_path: Data path for qrels specific to language (use make_qrels_topics.py before)
+    :param lang: 'us','es','jp'
+    :return:
+    '''
     qrels = pd.read_csv(f'''{data_path}{lang}_qrels.csv''', sep=',')
     qrels['label'] = qrels['label'].astype(int)
     qrels['qid'] = qrels['qid'].astype(str)
@@ -61,7 +85,21 @@ def get_qrels(data_path, lang):
 
 
 def index_each_lang(qe=False, eval=True, lang='en', index_path='', gs=False, data_to_index='title_text',
-                    change_settings=False):
+                    change_settings=False,num_results=100):
+
+    '''
+    Index each language
+
+    :param qe: Query Expansion
+    :param eval: Evaluatiton and scoring on train
+    :param lang: Specific Language ('us','es','jp')
+    :param index_path: Path to save index
+    :param gs: Grid Search
+    :param data_to_index: Combination of Data
+    :param change_settings: To use Grid Search settings
+    :param num_results: Total number of results.
+    :return:
+    '''
 
     data_type = f'''{lang}_{data_to_index}'''
     df_docs = pd.read_csv(f'''./subsets/{lang}_prod_{data_to_index}.csv''')
@@ -82,7 +120,7 @@ def index_each_lang(qe=False, eval=True, lang='en', index_path='', gs=False, dat
         stemmer='Stopwords,SpanishSnowballStemmer'
     else:
         stemmer=''
-    BM25 = pt.BatchRetrieve(indexref, num_results=100, wmodel="BM25",
+    BM25 = pt.BatchRetrieve(indexref, num_results=num_results, wmodel="BM25",
                             controls={"c": 0.8, "bm25.k_1": 0.6, "bm25.k_3": 0.5}, properties={
             'tokeniser': 'UTFTokeniser',
             'termpipelines': stemmer, })
@@ -94,9 +132,9 @@ def index_each_lang(qe=False, eval=True, lang='en', index_path='', gs=False, dat
         topics = pt.io.read_topics(f'''{data_path}{lang}_topics.csv''', format='singleline', tokenise=True)
         f = pt.GridSearch(
             BM25,
-            {BM25: {"c": [0, 0.5, 0.8],
-                    "bm25.k_1": [0.4, 0.6, 0.9, 1.2],
-                    "bm25.k_3": [0.5, 2, 4, 6]
+            {BM25: {"c": [0.3, 0.5, 0.8, 0.9],
+                    "bm25.k_1": [0.3, 0.6, 0.9,1.2,1.4,1.6],
+                    "bm25.k_3": [0.5, 2, 4, 6,8]
                     }},
             topics,
             qrels,
@@ -142,14 +180,25 @@ data_to_index = data_to_indexs[-2]
 
 
 for lang in ['us','es','jp']:
-    index_each_lang(qe=False, eval=True, lang=lang, index_path=index_path, data_to_index=data_to_index, gs=False)
+    index_each_lang(qe=False, eval=True, lang=lang, index_path=index_path, data_to_index=data_to_index, gs=False,num_results=100)
 
+
+
+
+create_submission_file=True
 ## Combining different results for submission.
-combined_df=combine_result(data_path, 'BM25', data_to_index, dtype='train')
-cleaned_df=check_the_submission(combined_df,data_path,'BM25',data_to_index)
+if create_submission_file:
+    combined_df=combine_result(data_path, 'BM25', data_to_index, dtype='test')
+    cleaned_df=check_the_submission(combined_df,data_path,'BM25',data_to_index)
+
+
+
 
 # train dtype
-qrels=get_merged_qrels(data_path)
-pt.Utils.evaluate(combined_df, qrels, metrics=['ndcg_cut_10', 'ndcg_cut_20'])
+evaluate_train=False
+if evaluate_train:
+    combined_df=combine_result(data_path, 'BM25', data_to_index, dtype='train')
+    qrels=get_merged_qrels(data_path)
+    pt.Utils.evaluate(combined_df, qrels, metrics=['ndcg_cut_10', 'ndcg_cut_20'])
 #{'ndcg_cut_10': 0.23747557699680494, 'ndcg_cut_20': 0.22943625462979889} num_results=20
-#{'ndcg_cut_10': 0.27361675817105907, 'ndcg_cut_20': 0.26223407618626343} num_results=
+#{'ndcg_cut_10': 0.27361675817105907, 'ndcg_cut_20': 0.26223407618626343} num_results=100
