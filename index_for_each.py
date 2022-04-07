@@ -4,7 +4,9 @@ import pandas as pd
 import pyterrier as pt
 
 if not pt.started():
-    pt.init(mem=8000,version='snapshot', boot_packages=["com.github.terrierteam:terrier-prf:-SNAPSHOT"])
+    pt.init(mem=8000)
+
+#version='snapshot', boot_packages=["com.github.terrierteam:terrier-prf:-SNAPSHOT"])
 
 def combine_result(data_path, model_name, data_to_index, dtype='train'):
     '''
@@ -180,7 +182,7 @@ data_to_index = data_to_indexs[-2]
 
 
 for lang in ['us','es','jp']:
-    index_each_lang(qe=False, eval=True, lang=lang, index_path=index_path, data_to_index=data_to_index, gs=False,num_results=100)
+    index_each_lang(qe=False, eval=True, lang=lang, index_path=index_path, data_to_index=data_to_index, gs=False,num_results=200)
 
 
 

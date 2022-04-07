@@ -5,7 +5,7 @@ import re
 import pandas as pd
 
 data_path = '/Users/ricky/Documents/Rishabh/Dataset/KDD_amazon/'
-prod_cat = pd.read_csv(f'''{data_path}product_cat.csv''')
+prod_cat = pd.read_csv(f'''{data_path}product_catalogue-v0.2.csv''')
 
 
 ## clean

@@ -13,7 +13,7 @@ def mkdir_path(path):
 
 data_path = '/Users/ricky/Documents/Rishabh/Dataset/KDD_amazon/'
 
-train = pd.read_csv(f'''{data_path}train.csv''')
+train = pd.read_csv(f'''{data_path}train-v0.2.csv''')
 
 
 def preprocessing(x):
@@ -70,7 +70,7 @@ def test_topic(df, lang='en'):
     return topics
 
 
-test = pd.read_csv(f'''{data_path}test.csv''')
+test = pd.read_csv(f'''{data_path}test_public-v0.2.csv''')
 # use for each language.
 for lang in ['us', 'es', 'jp']:
     test_sub = test[test["query_locale"] == lang]
