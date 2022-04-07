@@ -1,0 +1,6 @@
+---
+dataset:
+  path : '/home/rupadhyay/ir_datasets/amazon_KDD_q_p_ranking/'
+  collection : 'product_catalogue-v0.2.csv'
+  train : 'train-v0.2.csv'
+  test : 'test_public-v0.2.csv'
