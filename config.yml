@@ -6,3 +6,5 @@ dataset:
   test : 'test_public-v0.2.csv'
   seed : 42
   train_split_rate : 60
+Reranker:
+  model : 'bert-base-uncased'
