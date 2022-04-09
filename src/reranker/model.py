@@ -3,8 +3,8 @@ import pytorch_lightning as pl
 from transformers import AutoConfig, AdamW, AutoModel
 import transformers
 from torch import nn, split
-from src.reranker.loss import PairwiseHingLoss
-from src.reranker.evaluator import Evaluator
+from loss import PairwiseHingLoss
+from evaluator import Evaluator
 import numpy as np
 
 

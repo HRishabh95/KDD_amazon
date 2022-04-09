@@ -117,7 +117,7 @@ def index_each_lang(qe=False, eval=True, lang='en', index_path='', gs=False, dat
 if __name__ == '__main__':
     with open('./config.yml') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)['dataset']
-    data_path = './subsets/'
+    data_path = 'data/processed/'
     index_path = config["path"]
     data_to_index = 'title_text'
     for lang in ['es', 'jp']:

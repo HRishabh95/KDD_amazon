@@ -5,7 +5,8 @@ from torch.utils.data import DataLoader
 
 
 class KDD_amazonDataModule(pl.LightningDataModule, ABC):
-    def __init__(self, train_data, val_data, test_data, train_batch_size, batch_size=8):
+    def __init__(self, train_data, val_data, test_data, train_batch_size, batch_size,
+                 model_name, train_rels, val_rels, test_rels, data_fn, topics_fn, test_topics_fn):
         super().__init__()
         self.test_dataset = None
         self.val_dataset = None
@@ -16,10 +17,12 @@ class KDD_amazonDataModule(pl.LightningDataModule, ABC):
         self.train_data = train_data
         self.val_data = val_data
         self.test_data = test_data
-        batch_processing = TrainBatching()
-        self.train_batch_processing = batch_processing.build_training_batch
-        batch_processing = EvalBatching()
-        self.eval_batch_processing = batch_processing.build_eval_batch
+        batch_processing = TrainBatching(model_name, batch_size, train_rels, data_fn, topics_fn)
+        self.train_batch_processing = batch_processing.build_batch
+        batch_processing = TrainBatching(model_name, batch_size, val_rels, data_fn, topics_fn)
+        self.val_batch_processing = batch_processing.build_batch
+        batch_processing = EvalBatching(model_name, test_rels, test_topics_fn)
+        self.eval_batch_processing = batch_processing.build_batch
 
     def setup(self, stage=None):
         self.train_dataset = self.train_data
@@ -38,7 +41,7 @@ class KDD_amazonDataModule(pl.LightningDataModule, ABC):
         return DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
-            collate_fn=self.eval_batch_processing
+            collate_fn=self.val_batch_processing
         )
 
     def test_dataloader(self):

@@ -8,3 +8,4 @@ dependencies:
       - python-terrier==0.8.0
       - torch==1.10.2
       - pytorch-lightning
+      - dotmap
