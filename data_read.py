@@ -121,9 +121,6 @@ def index_file_for_combine(cleaned_prod_cat, data_type):
 
         else:
             if not os.path.isfile('./subsets/%s_prod_%s_%s_%s_%s.csv' % (
-                    lang, data_type[0], data_type[1], data_type[2], data_type[3])):
-                for_4_comb(lang_prod, data_type, lang)
-
 
 def clean_df_combine(prod_cat):
     '''
