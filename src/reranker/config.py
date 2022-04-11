@@ -1,14 +1,15 @@
-import pytorch_lightning as pl
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
-from pytorch_lightning.loggers import TensorBoardLogger
-from data.KDD_amazonDataModule import KDD_amazonDataModule
-from model import CrossEncoder
+import json
 import random
+
+import pytorch_lightning as pl
 import yaml
 from dotmap import DotMap
-import json
-from data.utils.batch_processing import EvalBatching as EB
+from model import CrossEncoder
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
+from pytorch_lightning.loggers import TensorBoardLogger
 
+from data.KDD_amazonDataModule import KDD_amazonDataModule
+from data.utils.batch_processing import EvalBatching as EB
 
 with open('../../config.yml') as f:
     g_config = yaml.load(f, Loader=yaml.FullLoader)

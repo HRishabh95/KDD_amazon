@@ -1,8 +1,9 @@
-import random
-from transformers import AutoTokenizer
-from os.path import join as joinpath
 import json
+import random
+from os.path import join as joinpath
+
 import pandas as pd
+from transformers import AutoTokenizer
 
 
 class BatchProcessing:

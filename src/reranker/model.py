@@ -1,11 +1,12 @@
 from abc import ABC
-import pytorch_lightning as pl
-from transformers import AutoConfig, AdamW, AutoModel
-import transformers
-from torch import nn, split
-from loss import PairwiseHingLoss
-from evaluator import Evaluator
+
 import numpy as np
+import pytorch_lightning as pl
+import transformers
+from evaluator import Evaluator
+from loss import PairwiseHingLoss
+from torch import nn, split
+from transformers import AdamW, AutoConfig, AutoModel
 
 
 class CrossEncoder(pl.LightningModule, ABC):

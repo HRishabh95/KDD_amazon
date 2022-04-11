@@ -1,7 +1,8 @@
 from abc import ABC
-from utils.batch_processing import TrainBatching, EvalBatching
+
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
+from utils.batch_processing import EvalBatching, TrainBatching
 
 
 class KDD_amazonDataModule(pl.LightningDataModule, ABC):

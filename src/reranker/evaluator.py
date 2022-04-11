@@ -1,6 +1,7 @@
-import os
 import csv
+import os
 from typing import List
+
 import pandas as pd
 import pyterrier as pt
 from pyterrier.measures import *
