@@ -1,11 +1,11 @@
 import os
 import os.path
 import re
-
+import yaml
 import pandas as pd
+from os.path import join as joinpath
+from make_qrels_topics import get_qrels_topics,test_topic
 
-data_path = '/Users/ricky/Documents/Rishabh/Dataset/KDD_amazon/'
-prod_cat = pd.read_csv(f'''{data_path}product_catalogue-v0.2.csv''')
 
 
 ## clean
@@ -143,7 +143,34 @@ def clean_df_combine(prod_cat):
         index_file_for_combine(cleaned_prod_cat, sub)
 
 
-index_each_data=False
-if index_each_data:
-    clean_df_for_each(prod_cat)
-clean_df_combine(prod_cat)
+
+if __name__ == '__main__':
+    with open('./config.yml') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)['dataset']
+
+    data_path = config['path']
+
+    prod_cat = pd.read_csv(joinpath(data_path, config['collection']))
+    train = pd.read_csv(joinpath(data_path, config['train']))
+
+    # Get Topics and Qrels
+    en_train = train[train['query_locale'] == 'us']
+    jp_train = train[train['query_locale'] == 'jp']
+    es_train = train[train['query_locale'] == 'es']
+
+    en_topics, en_qrels = get_qrels_topics(en_train, lang='us')
+    jp_topics, jp_qrels = get_qrels_topics(jp_train, lang='jp')
+    es_topics, es_qrels = get_qrels_topics(es_train, lang='es')
+
+    # index for each text fields such as title, product brand etc.
+    if config['index_each_data']:
+        clean_df_for_each(prod_cat)
+
+    # index for combination of text fields.
+    clean_df_combine(prod_cat)
+
+    test = pd.read_csv(joinpath(data_path, config['test']))
+    # use for each language.
+    for lang in ['us', 'es', 'jp']:
+        test_sub = test[test["query_locale"] == lang]
+        topics_test = test_topic(test_sub, lang=lang)

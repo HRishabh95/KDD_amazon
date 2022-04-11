@@ -11,11 +11,6 @@ def mkdir_path(path):
         raise
 
 
-data_path = '/Users/ricky/Documents/Rishabh/Dataset/KDD_amazon/'
-
-train = pd.read_csv(f'''{data_path}train-v0.2.csv''')
-
-
 def preprocessing(x):
     '''
 
@@ -47,18 +42,6 @@ def get_qrels_topics(df, lang):
     return qrels, topics
 
 
-# Get Topics and Qrels
-en_train = train[train['query_locale'] == 'us']
-jp_train = train[train['query_locale'] == 'jp']
-es_train = train[train['query_locale'] == 'es']
-
-en_topics, en_qrels = get_qrels_topics(en_train, lang='us')
-jp_topics, jp_qrels = get_qrels_topics(jp_train, lang='jp')
-es_topics, es_qrels = get_qrels_topics(es_train, lang='es')
-
-
-## Read test
-
 def test_topic(df, lang='en'):
     topics = df[['query_id', 'query']]
     topics = topics.drop_duplicates()
@@ -69,9 +52,3 @@ def test_topic(df, lang='en'):
     topics.to_csv('./subsets/%s_test_topics.csv' % lang, index=False, sep=':', header=False)
     return topics
 
-
-test = pd.read_csv(f'''{data_path}test_public-v0.2.csv''')
-# use for each language.
-for lang in ['us', 'es', 'jp']:
-    test_sub = test[test["query_locale"] == lang]
-    topics_test = test_topic(test_sub, lang=lang)

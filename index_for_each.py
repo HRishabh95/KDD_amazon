@@ -6,6 +6,7 @@ import pyterrier as pt
 if not pt.started():
     pt.init(mem=8000)
 
+import yaml
 #version='snapshot', boot_packages=["com.github.terrierteam:terrier-prf:-SNAPSHOT"])
 
 def combine_result(data_path, model_name, data_to_index, dtype='train'):
@@ -168,39 +169,34 @@ def index_each_lang(qe=False, eval=True, lang='en', index_path='', gs=False, dat
     submission_sample.to_csv(f'''{data_path}{lang}_{data_to_index}_{model_name}_test.csv''')
 
 
-data_path = '/Users/ricky/PycharmProjects/KDD_amazon/subsets/'
-index_path = '/Users/ricky/Documents/Rishabh/Dataset/KDD_amazon/index/'
 
-data_to_indexs=['product_bullet_point_product_title', 'product_bullet_point_product_description',
-               'product_bullet_point_product_brand',
-               'product_title_product_description',
-               'product_brand_product_description_product_bullet_point',
-               'product_title_product_description_product_bullet_point',
-               'product_title_product_brand_product_bullet_point',
-               'product_title_product_description_product_bullet_point_product_brand']
-data_to_index = data_to_indexs[-2]
+if __name__ == '__main__':
+    with open('./config.yml') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)['dataset']
+    data_path = './subsets/'
+    index_path = config["path"]
+    data_to_indexs = ['product_bullet_point_product_title', 'product_bullet_point_product_description',
+                      'product_bullet_point_product_brand',
+                      'product_title_product_description',
+                      'product_brand_product_description_product_bullet_point',
+                      'product_title_product_description_product_bullet_point',
+                      'product_title_product_brand_product_bullet_point',
+                      'product_title_product_description_product_bullet_point_product_brand']
 
-
-for lang in ['us','es','jp']:
-    index_each_lang(qe=False, eval=True, lang=lang, index_path=index_path, data_to_index=data_to_index, gs=False,num_results=200)
-
-
-
-
-create_submission_file=True
-## Combining different results for submission.
-if create_submission_file:
-    combined_df=combine_result(data_path, 'BM25', data_to_index, dtype='test')
-    cleaned_df=check_the_submission(combined_df,data_path,'BM25',data_to_index)
+    data_to_index = data_to_indexs[-2]
+    for lang in ['us','es', 'jp']:
+        index_each_lang(qe=False, eval=True, lang=lang, index_path=index_path, data_to_index=data_to_index, gs=False,num_results=200)
 
 
+    ## Combining different results for submission.
+    if config['create_submission_file']:
+        combined_df = combine_result(data_path, 'BM25', data_to_index, dtype='test')
+        cleaned_df = check_the_submission(combined_df, data_path, 'BM25', data_to_index)
 
+    if config['evaluate_train']:
+        combined_df = combine_result(data_path, 'BM25', data_to_index, dtype='train')
+        qrels = get_merged_qrels(data_path)
+        pt.Utils.evaluate(combined_df, qrels, metrics=['ndcg_cut_10', 'ndcg_cut_20'])
 
-# train dtype
-evaluate_train=False
-if evaluate_train:
-    combined_df=combine_result(data_path, 'BM25', data_to_index, dtype='train')
-    qrels=get_merged_qrels(data_path)
-    pt.Utils.evaluate(combined_df, qrels, metrics=['ndcg_cut_10', 'ndcg_cut_20'])
-#{'ndcg_cut_10': 0.23747557699680494, 'ndcg_cut_20': 0.22943625462979889} num_results=20
-#{'ndcg_cut_10': 0.27361675817105907, 'ndcg_cut_20': 0.26223407618626343} num_results=100
+    # {'ndcg_cut_10': 0.23747557699680494, 'ndcg_cut_20': 0.22943625462979889} num_results=20
+    # {'ndcg_cut_10': 0.27361675817105907, 'ndcg_cut_20': 0.26223407618626343} num_results=100
