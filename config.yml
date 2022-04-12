@@ -9,3 +9,21 @@ dataset:
   index_each_data: False
   create_submission_file: True
   evaluate_train: False
+reranker:
+  data_path : '../../data/interim/'
+  model : 'bert-base-uncased'
+  n_labels : 2
+  tk_max_len : 512
+  seed : 42
+  batch_size : 16
+  n_epochs : 20
+  warmup_steps : null
+  language : 'en'
+  accum_iter : 0
+  eval_every_n_epoch : 1
+  n_examples : 1024
+  patience : 5
+  logger_name : 'KDD_reranker_'
+  train_rels : 'train_{}.json'
+  val_rels : 'val_{}.json'
+  test_resls: 'test_{}.json'

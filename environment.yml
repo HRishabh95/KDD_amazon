@@ -1,0 +1,11 @@
+name: KDD_amazon
+dependencies:
+  - python=3.9
+  - black
+  - pip
+  - pip:
+      - transformers==4.14.1
+      - python-terrier==0.8.0
+      - torch==1.10.2
+      - pytorch-lightning
+      - dotmap
